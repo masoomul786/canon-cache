@@ -1,180 +1,366 @@
 # CanonCache
-### Semantic KV-Cache Canonicalization Research Platform
 
-> A research tool for benchmarking prompt canonicalization as a strategy to improve KV-cache prefix hit rates in multi-tenant LLM inference environments.
+> Semantic KV-Cache Canonicalization for Multi-Tenant LLM Inference
 
----
+[![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/license-CC--BY--NC--SA%204.0-blue.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+[![Status](https://img.shields.io/badge/status-research--prototype-orange.svg)]()
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)]()
 
-## Overview
+CanonCache is a research prototype and benchmarking platform for evaluating **semantic prompt canonicalization** as a strategy to improve KV-cache prefix reuse in large language model (LLM) serving systems.
 
-CanonCache evaluates the core hypothesis of the **SemCache** research paper:
+The core idea is simple:
 
-> *By rewriting semantically equivalent but syntactically diverse prompts into a canonical form, we can dramatically increase prefix cache hit rates — reducing GPU-hours per request without degrading output quality.*
-
-It provides a professional GUI (Python Tkinter) connected to a local **LM Studio** inference server, with:
-
-- **Benchmark Runner** — runs raw vs. canonical prompt pairs against your model, measures latency, token efficiency, semantic similarity, and simulated cache hit rates
-- **Chat Interface** — direct streaming chat for qualitative evaluation
-- **Results Viewer** — per-cluster detailed analysis and export
-- **Auto-Detection** — automatically finds your running LM Studio instance
+> Semantically equivalent prompts often fail to share KV-cache prefixes because they differ syntactically.  
+> CanonCache rewrites them into deterministic canonical forms to maximize exact-prefix cache reuse.
 
 ---
 
-## Quick Start
+# Research Paper
 
-### 1. Prerequisites
+**CanonCache: Semantic KV-Cache Canonicalization as a Strategy for LLM Inference Efficiency in Multi-Tenant Environments**
 
-| Requirement | Notes |
-|-------------|-------|
-| Python 3.10+ | `python --version` |
-| `requests` | `pip install requests` |
-| `tkinter` | Bundled with Python on Windows/Mac; `sudo apt install python3-tk` on Linux |
-| LM Studio | [lmstudio.ai](https://lmstudio.ai) — run the local server on port 1234 |
+**Author:** Masoomul Haque Choudhury  
+**License:** CC BY-NC-SA 4.0  
+**Status:** Research Preprint — May 2026
 
-### 2. Install & Run
+GitHub Repository:  
+https://github.com/masoomul786/canon-cache
 
-```bash
-# Clone or extract the project
-cd CanonCache
+Project Folder:  
+https://github.com/masoomul786/canon-cache/tree/main/canon-cache-V1
 
-# Install dependencies
-pip install -r requirements.txt
+---
 
-# Run the application
-python main.py
+# Core Hypothesis
+
+Traditional prefix caching systems such as:
+- vLLM
+- SGLang
+- RadixAttention
+
+require **exact token-prefix matches**.
+
+This fails for real-world user traffic:
+
+| Prompt A | Prompt B |
+|---|---|
+| What is machine learning? | Can you explain ML to me? |
+
+Semantically identical.  
+Token prefixes completely different.
+
+CanonCache introduces a semantic canonicalization layer:
+
+```text
+Raw Prompt
+    ↓
+Canonicalization
+    ↓
+Deterministic Canonical Prompt
+    ↓
+Exact Prefix Cache Reuse
 ```
 
-### 3. Connect to LM Studio
+---
 
-1. Open LM Studio → Load a model → Enable the local server (Settings → Local Server)
-2. In CanonCache, go to **Settings** tab → click **⚡ Auto-Detect LM Studio**
-3. The status bar will turn green when connected
+# Benchmark Results (Run 522b16c2)
 
-### 4. Run a Benchmark
+| Metric | Raw | Canonical |
+|---|---|---|
+| Cache Hit Rate | 5% | 37.5% |
+| Token Reduction | — | 47.5% |
+| SCAR | — | 7.5× |
+| SCE | — | 0.475 |
+| Avg Semantic Similarity | — | 0.399 |
+| Latency Δ | — | -1.3% |
 
-1. Go to **Benchmark** tab
-2. Select number of clusters (default: 10 from the 20 included)
-3. Click **▶ Run Benchmark**
-4. Watch real-time progress and metrics update live
+### Key Findings
+
+- **+32.5 percentage-point cache hit lift**
+- **47.5% prompt token reduction**
+- **7.5× cache amplification (SCAR)**
+- Minimal latency overhead on a cold-start single-node setup
+
+⚠️ Current results are based on:
+- simulated prefix-cache evaluation
+- single-node LM Studio inference
+- no active GPU-level prefix caching
+
+These benchmarks validate the **semantic canonicalization premise**, not full production deployment behavior.
 
 ---
 
-## Project Structure
+# Architecture
 
+```text
+Users
+  ↓
+Semantic Canonicalizer
+  ↓
+Canonical Prompt
+  ↓
+Prefix Cache Layer
+  ↓
+LLM Inference Engine
+(LM Studio / vLLM / SGLang)
+  ↓
+Responses
 ```
-CanonCache/
-├── main.py                  # Entry point
+
+---
+
+# Features
+
+- Semantic prompt canonicalization
+- Prefix cache benchmarking
+- Real-time benchmark execution
+- LM Studio integration
+- JSON/CSV export
+- GUI benchmark runner
+- Per-cluster analysis
+- Semantic similarity evaluation
+- Cache amplification metrics (SCAR)
+- Compression efficiency metrics (SCE)
+
+---
+
+# Project Structure
+
+```text
+canon-cache-V1/
+├── main.py
 ├── requirements.txt
 ├── README.md
 │
 ├── core/
-│   ├── lm_studio.py         # LM Studio API client (auto-detect + streaming)
-│   └── benchmark.py         # Benchmark engine, metrics, export
+│   ├── benchmark.py
+│   └── lm_studio.py
 │
 ├── ui/
-│   ├── theme.py             # Dark theme constants
-│   ├── widgets.py           # Reusable UI components
-│   └── app.py               # Main application window + all tabs
+│   ├── app.py
+│   ├── theme.py
+│   └── widgets.py
 │
 ├── data/
-│   └── sample_clusters.jsonl  # 20 benchmark prompt clusters
+│   └── sample_clusters.jsonl
 │
-└── results/                 # Auto-saved JSON/CSV reports
+├── results/
+│   ├── reports/
+│   └── exports/
+│
+└── docs/
+    └── preprint/
 ```
 
 ---
 
-## Benchmark Dataset Format
+# Installation
 
-The benchmark dataset (`data/sample_clusters.jsonl`) is JSONL — one cluster per line:
+## Requirements
+
+| Requirement | Version |
+|---|---|
+| Python | 3.10+ |
+| LM Studio | v0.3+ |
+| requests | latest |
+| tkinter | bundled |
+
+---
+
+# Quick Start
+
+## 1. Clone Repository
+
+```bash
+git clone https://github.com/masoomul786/canon-cache.git
+cd canon-cache/canon-cache-V1
+```
+
+## 2. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+## 3. Start LM Studio
+
+1. Open LM Studio
+2. Load a model
+3. Enable Local Server
+4. Default endpoint:
+   http://127.0.0.1:1234
+
+Recommended model:
+- Qwen/Qwen3.5-9B
+- 4-bit quantized
+
+---
+
+## 4. Run CanonCache
+
+```bash
+python main.py
+```
+
+---
+
+# Benchmark Dataset Format
+
+Example cluster:
 
 ```json
 {
   "cluster_id": "c001",
-  "topic": "machine_learning_definition",
+  "topic": "machine_learning",
   "prompts": [
     "What is machine learning?",
-    "Can you explain ML to me?",
-    "Define machine learning in simple terms",
-    "What does machine learning mean?"
+    "Can you explain ML to me?"
   ],
   "canonical": "Explain the concept of machine learning clearly and concisely.",
   "source": "handcrafted"
 }
 ```
 
-| Field | Description |
-|-------|-------------|
-| `cluster_id` | Unique identifier |
-| `topic` | Topic label for grouping |
-| `prompts` | 2–4 semantically equivalent but syntactically diverse prompts |
-| `canonical` | The canonicalized form — the single form all prompts map to |
-| `source` | `handcrafted` / `lmsys` / `synthetic` |
-
 ---
 
-## Metrics Explained
+# Formal Metrics
 
-| Metric | Description |
-|--------|-------------|
-| **Cache Hit Rate (Raw)** | Simulated exact-prefix cache hit rate (~5%) — represents baseline vLLM/SGLang performance on diverse traffic |
-| **Cache Hit Rate (Canonical)** | Simulated hit rate after canonicalization — target is 35–65% with real traffic |
-| **Latency Δ** | Percentage change in avg response latency: raw → canonical |
-| **Token Reduction %** | Total tokens consumed: sum(raw prompts) vs sum(canonical prompts) |
-| **Semantic Similarity** | Jaccard overlap between canonical and raw responses — measures quality preservation |
-| **Quality Score** | Composite similarity of canonical response vs all raw responses in the cluster |
+## Prefix Cache Hit Rate
 
----
-
-## Research Context
-
-This tool supports the **SemCache** research paper:
-
-> *SemCache: Semantic KV-Cache Merging for Multi-Tenant LLM Inference*
->
-> Core contributions:
-> 1. **Prompt Canonicalizer** — rewrites semantically equivalent prompts to a single canonical form to maximize exact prefix match
-> 2. **KV-Cache Adapter** — low-rank LoRA-style adapter that transforms one prompt's KV-cache to approximate another's
-> 3. **Merge Feasibility Predictor** — binary gate that ensures only high-confidence pairs are merged
-
-**Phase 1 validation (this tool):** Demonstrates that canonicalization alone produces a measurable prefix cache hit rate lift, validating the core premise before implementing the full KV-cache adapter.
-
-**Target venues:** MLSys, OSDI, SOSP
-
----
-
-## Extending the Dataset
-
-Add more clusters to `data/sample_clusters.jsonl`:
-
-```bash
-echo '{"cluster_id":"c021","topic":"my_topic","prompts":["Prompt A?","Prompt B?"],"canonical":"Canonical form.","source":"custom"}' >> data/sample_clusters.jsonl
+```math
+H = N_hit / N_total
 ```
 
-Or create a new JSONL file and load it via the **Browse** button in the Benchmark tab.
+---
+
+## Token Reduction
+
+```math
+R_token = (T_raw - T_canon) / T_raw × 100
+```
 
 ---
 
-## Exporting Results
+## Semantic Similarity
 
-After a benchmark run:
-- **Auto-save:** Reports are automatically saved to `results/report_<run_id>_<timestamp>.json`
-- **Manual export:** Use **📥 Export JSON** or **📥 Export CSV** in the Benchmark tab
-- **Load previous:** Use **📂 Load JSON Report** in the Results tab
-
----
-
-## Troubleshooting
-
-| Issue | Fix |
-|-------|-----|
-| "Auto-detect failed" | Ensure LM Studio is running and the local server is enabled (default port 1234) |
-| "Request timed out" | Model may be loading; try again or increase timeout in `core/lm_studio.py` |
-| Tkinter not found | `sudo apt install python3-tk` (Linux) or reinstall Python (Windows/Mac) |
-| Empty responses | Check LM Studio model is loaded and responding in LM Studio's chat UI first |
+```math
+Sim(u,v) = (u·v)/(||u|| ||v||)
+```
 
 ---
 
-## License
+## Semantic Cache Amplification Ratio (SCAR)
 
-For research use. Based on original SemCache research concept.
+```math
+SCAR = H_canon / H_raw
+```
+
+---
+
+## Semantic Compression Efficiency (SCE)
+
+```math
+SCE = (T_raw - T_canon) / T_raw
+```
+
+---
+
+# Research Positioning
+
+CanonCache is designed as:
+- a middleware optimization layer
+- not a new transformer architecture
+- not a new foundation model
+
+It is intended to complement:
+- prefix caching
+- continuous batching
+- speculative decoding
+- disaggregated prefill architectures
+
+---
+
+# Current Limitations
+
+- Single-node benchmark only
+- Simulated cache evaluation
+- Small dataset (10 clusters)
+- Canonicalizer uses same model as inference
+- Semantic fidelity still requires improvement
+- No real vLLM integration yet
+
+---
+
+# Future Work
+
+- vLLM integration
+- SGLang integration
+- Dedicated lightweight canonicalizer
+- Large-scale ShareGPT/LMSYS evaluation
+- Multi-turn conversation support
+- BERTScore / LLM-as-judge evaluation
+- Real GPU KV-cache benchmarking
+
+---
+
+# Citation
+
+```bibtex
+@misc{choudhury2026canoncache,
+  title={CanonCache: Semantic KV-Cache Canonicalization for LLM Inference Efficiency in Multi-Tenant Environments},
+  author={Masoomul Haque Choudhury},
+  year={2026},
+  note={Research Preprint},
+  license={CC BY-NC-SA 4.0}
+}
+```
+
+---
+
+# License
+
+This project is licensed under the:
+
+## CC BY-NC-SA 4.0
+Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+
+You are free to:
+- Share
+- Remix
+- Adapt
+
+Under the following conditions:
+- Attribution required
+- Non-commercial use only
+- Derivative works must use the same license
+
+Full License:
+https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+---
+
+# Author
+
+**Masoomul Haque Choudhury**  
+Independent Researcher — Assam, India
+
+Research Areas:
+- LLM Inference Optimization
+- KV-Cache Systems
+- Semantic Caching
+- AI Infrastructure
+- Token Efficiency
+
+---
+
+# Acknowledgement
+
+CanonCache builds upon ideas and prior systems research from:
+- vLLM
+- SGLang
+- PagedAttention
+- RadixAttention
+- Sentence-BERT
+- Prefix Caching Systems
+
+This project is an independent research exploration into semantic canonicalization for inference efficiency.
