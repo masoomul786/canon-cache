@@ -1,0 +1,11 @@
+cluster_id,topic,canonical_prompt,avg_raw_latency_ms,canonical_latency_ms,latency_improvement_pct,cache_hit_rate_raw,cache_hit_rate_canonical,avg_semantic_similarity,quality_score,num_raw_prompts,errors
+c001,machine_learning_definition,Explain the concept of machine learning clearly and concisely.,7143.95,3326.58,53.44,0.0,1.0,0.2768,0.2768,2,0
+c002,transformer_architecture,Explain the transformer architecture and self-attention mechanism used in large language models.,7944.7,7951.75,-0.09,0.0,1.0,0.3258,0.3258,2,0
+c003,python_list_comprehension,Explain Python list comprehensions with a clear example.,7991.39,7921.77,0.87,0.0,1.0,0.5051,0.5051,2,0
+c004,climate_change_causes,Explain the primary causes of climate change and global warming.,7506.1,7783.04,-3.69,0.0,1.0,0.4126,0.4126,2,0
+c005,sorting_algorithms,Describe the most common sorting algorithms and their time complexities.,7730.49,8328.68,-7.74,0.0,1.0,0.3933,0.3933,2,0
+c006,black_holes,"Explain what black holes are, how they form, and their key properties.",5412.84,8205.12,-51.59,0.0,1.0,0.2758,0.2758,2,0
+c007,sql_joins,Explain the different types of SQL JOINs with examples.,7356.58,8015.87,-8.96,0.0,1.0,0.5209,0.5209,2,0
+c008,restful_api,Explain what a RESTful API is and how it works.,7203.08,8075.11,-12.11,0.0,1.0,0.3645,0.3645,2,0
+c009,photosynthesis,Explain the process of photosynthesis in plants.,8210.21,8046.36,2.0,0.0,1.0,0.4779,0.4779,2,0
+c010,gradient_descent,Explain the gradient descent optimization algorithm used in machine learning.,8258.06,8107.2,1.83,0.0,1.0,0.436,0.436,2,0
